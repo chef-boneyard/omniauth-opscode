@@ -8,12 +8,12 @@ module OmniAuth
       include OmniAuth::Strategy
 
       args [:chef_webui_url]
-      option :fields, [:username]
+      option :fields, [:username,:password]
       option :uid_field, :username
       option :chef_webui_url, nil
 
       def request_phase
-        form = OmniAuth::Form.new(:title => "Login to Opscode", :url => callback_path)
+        form = OmniAuth::Form.new(:title => "Login to Deliverance", :url => callback_path)
         form.text_field 'Username', 'username'
         form.password_field 'Password', 'password'
         form.button "Login"
@@ -26,7 +26,7 @@ module OmniAuth
       end
 
       def uid
-        @identity[:name]
+        @identity[:username]
       end
 
       def info
@@ -46,16 +46,15 @@ module OmniAuth
         end
 
         conn.get("/login")
-        response = conn.post('/login_exec', { :name => request['username'], :password => request['password'] })
-        if response.status == 302 && response.headers['location'] =~ /nodes$/
+        response = conn.post('/login', {:username=>request['username'], :password=>request['password']})
+        if response.status == 302 && response.headers['location'] == options.chef_webui_url
           @identity = {
-            :name => request['username']
+            :username => request['username']
           }
         else
           nil
         end
       end
-
     end
   end
 end
